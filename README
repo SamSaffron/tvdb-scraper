@@ -1,0 +1,37 @@
+Ruby TV Show Xml Scraper
+
+This is a public domain script I wrote for scraping TV episode information from The TV DB.
+
+Do with it what you will, pretend you wrote it I don’t care.
+
+The TV DB scraper will query the The TV DB web services and try to find the best metadata for your television shows. If it finds any information it will create a hidden folder called metadata beneath the video files and place an XML file and optionally an image which describes the show
+Installation
+
+1. Download a copy of Ruby and install on your machine
+2. Run “ruby tvdb_scraper.rb PATH” where PATH represents the path containing tv shows
+
+Keys to getting this to work
+
+1. Ensure your directory structure follows the pattern \showname\seasonx
+  So Extras\Season 1\01.avi is a good starting point
+2. Ensure the TV show name matches the exact same tv show name in TheTVDB
+  So it’s 24 not “Twenty Four”
+3. Ensure you have a Season directory
+  Eg. place the first seasons episodes in the “Season 1” folder
+4. The script runs recursively, so start small, with a folder containing only a few files.
+
+What file names does it recognize?
+
+1. 201 – blablbl.avi means Season 2 Episode 
+2. s02e01 – another episode.avi means season 2 episode 1
+
+How do I rename my files to something a bit nicer than 2.avi
+
+The script has a special option called —fixnames, when specified it will rename your files to a nicer format –
+
+Careful with this option, it renames your files! Ensure all the metadata is 100% correct before using this.
+
+What about specials? 
+
+Not supported yet in the script, contributions are welcome. 
+
