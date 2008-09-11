@@ -6,6 +6,9 @@
 
 # 31 Jan 2008 - fixed issue with house md
 # 2 Feb 2008 - Fix issue where it destroys files when there is overlap using the -f option 
+# 9/11 - script crashs - fixed so it uses new APIs
+
+# TODO - need to have a more efficient way to update data 
 
 require "getoptlong"
 require "net/http"
@@ -14,6 +17,8 @@ require 'rexml/document'
 require 'pathname'
 require 'find'
 include REXML
+
+API_KEY = 'B89CE93890E9419B'
 
 def usage()
 	puts
@@ -61,31 +66,34 @@ class Series
 	end 
 	
 	def get_series_xml()
-		
+	
+    puts @name
+
 		url = URI.parse('http://thetvdb.com')
 		res = Net::HTTP.start(url.host, url.port) do |http|
-			http.get('/interfaces/GetSeries.php?seriesname=' +   CGI::escape(@name))
+			http.get('/api/GetSeries.php?seriesname=' +   CGI::escape(@name))
 		end
-		
+
 		doc = Document.new res.body
 		
 		series_xml = nil 
-		
-		doc.elements.each("Items/Item") do |element|
-		  
-		  if strip_dots(element.elements["SeriesName"].text.downcase) == strip_dots(@name.downcase)	
-			  series_xml = element.to_s
+    series_element = nil 
+
+		doc.elements.each("Data/Series") do |element|
+		  series_element ||= element 
+
+      if strip_dots(element.elements["SeriesName"].text.downcase) == strip_dots(@name.downcase)	
+        series_element = element
 			  break
 			end
-		end 
-		
-		if series_xml == nil 
-		  doc.elements.each("Items/Item") do |element|
-			  series_xml = element.to_s
-			  break
-		  end 
-	  end 
-		
+		end
+
+    if series_element
+      # keep it backward compatible with old xml
+      series_element.name = 'Item'
+			series_xml = series_element.to_s
+		end
+    
 		series_xml
 	end 
 	
@@ -165,35 +173,24 @@ class Episode
 		@episode_xml_path = new_episode_xml_path
 		
 	end 
-	
+
+
 	def get_episode_xml(series, season, episode_number)
+    
+    series_id, season, episode_number = [series.id,season ,episode_number,season].map{|a| CGI::escape(a)}
+
 		url = URI.parse('http://thetvdb.com')
 		res = Net::HTTP.start(url.host, url.port) do |http|
-			http.get('/interfaces/GetEpisodes.php?seriesid=' + 
-				CGI::escape(series.id) + "&season=" + season + "&episode=" + CGI::escape(episode_number) )
-		
+			http.get("/api/#{API_KEY}/series/#{series_id}/default/#{season}/#{episode_number}/en.xml") 
 		end
-		
-		doc = Document.new res.body
-		
-		# TODO: error handling ... 
-		id = doc.elements["Items/Item/id"].text	
-		
-		res = Net::HTTP.start(url.host, url.port) do |http|
-			http.get('/interfaces/EpisodeUpdates.php?lasttime=0&idlist=' + CGI::escape(id))
-		
-		end
-		
+    #p res.body
 		doc = Document.new res.body
 		episode_xml = nil 
-		doc.elements.each("Items/Item") do |element|
-			# TODO : smart heuristic to figure out the correct name
-			
-			found_id = element.elements["id"].text if element.elements["id"]
-			if found_id == id 
-				episode_xml = element.to_s
-				break
-			end 
+		doc.elements.each("Data/Episode") do |element|
+			# TODO : clean this up 
+      element.name = "Item"
+			episode_xml = element.to_s
+			break
 		end 
 		episode_xml
 	end 
