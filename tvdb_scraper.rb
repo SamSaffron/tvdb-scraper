@@ -235,15 +235,15 @@ def get_details(file, refresh)
 		end 	
 	end
 	
-	return nil unless  /\d+/ =~ file.basename
+	return nil unless /\d+/ =~ file.basename.to_s
 	
 	# check for a match in the style of 1x01
-	if /(\d+)[x|X](\d+)/ =~ file.basename
+	if /(\d+)[x|X](\d+)/ =~ file.basename.to_s
 		season, episode_number = $1.to_s, $2.to_s
 	
 	else 
 		# check for s01e01
-		if /[s|S](\d+)x?[e|E](\d+)/ =~ file.basename
+		if /[s|S](\d+)x?[e|E](\d+)/ =~ file.basename.to_s
 			season, episode_number = $1.to_s, $2.to_s
 		else 	
 			# the simple case 
@@ -295,7 +295,7 @@ end
 path = Pathname.new(ARGV[0]) 
 
 if not path.directory?   
-	puts "Directory not found " + path	
+	puts "Directory not found " + path.to_s	
 	usage 
 	exit
 end
